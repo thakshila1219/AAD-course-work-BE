@@ -3,7 +3,7 @@ package lk.ijse.aad_project.service.impl;
 import lk.ijse.aad_project.dto.ReservationDTO;
 import lk.ijse.aad_project.entity.DiningTable;
 import lk.ijse.aad_project.entity.Reservation;
-import lk.ijse.aad_project.entity.User;
+import lk.ijse.aad_project.entity.User; 
 import lk.ijse.aad_project.repository.DiningTableRepository;
 import lk.ijse.aad_project.repository.ReservationRepository;
 import lk.ijse.aad_project.repository.UserRepository;
