@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Data; 
 import lombok.NoArgsConstructor;
 
 @Data
