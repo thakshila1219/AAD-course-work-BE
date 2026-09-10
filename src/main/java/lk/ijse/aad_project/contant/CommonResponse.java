@@ -3,7 +3,7 @@ package lk.ijse.aad_project.contant;
 public class CommonResponse {
     private int statusCode;
     private String message;
-    private Object data; // මේ field එක එකතු කරන්න
+    private Object data; 
 
     public CommonResponse() {
     }
@@ -35,7 +35,6 @@ public class CommonResponse {
         this.message = message;
     }
 
-    // මේ Getter සහ Setter එක එකතු කරන්න
     public Object getData() {
         return data;
     }
