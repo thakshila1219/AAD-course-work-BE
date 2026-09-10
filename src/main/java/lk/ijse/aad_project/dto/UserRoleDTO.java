@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class UserRoleDTO {
     private long userRoleId;
     private long userId;
-    private long roleId;
+    private long roleId; 
 
     public UserRoleDTO(long userId, long roleId) {
         this.userId = userId;
