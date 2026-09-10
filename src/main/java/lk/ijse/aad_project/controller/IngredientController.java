@@ -2,7 +2,7 @@ package lk.ijse.aad_project.controller;
 
 import lk.ijse.aad_project.dto.IngredientDTO;
 import lk.ijse.aad_project.service.IngredientService;
-import lk.ijse.aad_project.contant.CommonResponse;
+import lk.ijse.aad_project.contant.CommonResponse; 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
