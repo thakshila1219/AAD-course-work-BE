@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.service.impl;
 
 import lk.ijse.aad_project.dto.DiscountCouponDTO;
-import lk.ijse.aad_project.entity.DiscountCoupon;
+import lk.ijse.aad_project.entity.DiscountCoupon; 
 import lk.ijse.aad_project.repository.DiscountCouponRepository;
 import lk.ijse.aad_project.service.DiscountCouponService;
 import lombok.extern.slf4j.Slf4j;
