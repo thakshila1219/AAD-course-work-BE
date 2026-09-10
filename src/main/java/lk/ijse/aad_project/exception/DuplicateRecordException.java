@@ -5,3 +5,4 @@ public class DuplicateRecordException extends RuntimeException {
         super(message);
     } 
 }
+ 
