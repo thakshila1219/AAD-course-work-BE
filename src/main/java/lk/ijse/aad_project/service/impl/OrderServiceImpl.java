@@ -113,7 +113,6 @@ public class OrderServiceImpl implements OrderService {
 
             Order order = optionalOrder.get();
 
-            // Order status එක toggle / update කරන logic එක
             if ("PENDING".equalsIgnoreCase(order.getStatus())) {
                 order.setStatus("COMPLETED");
             } else {
