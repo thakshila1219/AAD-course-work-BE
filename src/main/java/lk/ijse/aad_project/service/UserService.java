@@ -7,6 +7,5 @@ public interface UserService {
     void updateUser(UserDTO userDTO);
     void removeUser(long userId);
 
-    // මේ method එක එකතු කරන්න
     UserDTO authenticate(String email, String password);
 }
