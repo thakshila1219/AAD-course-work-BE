@@ -3,7 +3,7 @@ package lk.ijse.aad_project.service.impl;
 import lk.ijse.aad_project.dto.IngredientDTO;
 import lk.ijse.aad_project.entity.Ingredient;
 import lk.ijse.aad_project.entity.Supplier;
-import lk.ijse.aad_project.repository.IngredientRepository;
+import lk.ijse.aad_project.repository.IngredientRepository; 
 import lk.ijse.aad_project.repository.SupplierRepository;
 import lk.ijse.aad_project.service.IngredientService;
 import lombok.extern.slf4j.Slf4j;
