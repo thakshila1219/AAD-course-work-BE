@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.enumiration;
 
 public enum OrderStatus {
-    PENDING,
+    PENDING, 
     PREPARING,
     SERVED,
     COMPLETED,
