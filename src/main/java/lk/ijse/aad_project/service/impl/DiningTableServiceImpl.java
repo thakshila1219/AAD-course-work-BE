@@ -1,6 +1,6 @@
 package lk.ijse.aad_project.service.impl;
 
-import lk.ijse.aad_project.dto.DiningTableDTO;
+import lk.ijse.aad_project.dto.DiningTableDTO; 
 import lk.ijse.aad_project.entity.DiningTable;
 import lk.ijse.aad_project.repository.DiningTableRepository;
 import lk.ijse.aad_project.service.DiningTableService;
