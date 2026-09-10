@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.service.impl;
 
 import lk.ijse.aad_project.dto.StaffAssignmentDTO;
-import lk.ijse.aad_project.entity.DiningTable;
+import lk.ijse.aad_project.entity.DiningTable; 
 import lk.ijse.aad_project.entity.StaffAssignment;
 import lk.ijse.aad_project.entity.User;
 import lk.ijse.aad_project.repository.DiningTableRepository;
