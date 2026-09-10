@@ -2,7 +2,7 @@ package lk.ijse.aad_project.security;
 
 import lk.ijse.aad_project.dto.UserDTO;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jwts; 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
