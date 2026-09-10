@@ -6,4 +6,4 @@ public interface IngredientService {
     void saveIngredient(IngredientDTO ingredientDTO);
     void updateIngredient(IngredientDTO ingredientDTO);
     void removeIngredient(long ingredientId);
-}
+} 
