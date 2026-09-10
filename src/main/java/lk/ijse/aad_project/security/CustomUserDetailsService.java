@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.security;
 
 import lk.ijse.aad_project.entity.User;
-import lk.ijse.aad_project.exception.CustomException;
+import lk.ijse.aad_project.exception.CustomException; 
 import lk.ijse.aad_project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
