@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DiscountCouponRepository extends JpaRepository<DiscountCoupon, Long> {
-}
+} 
