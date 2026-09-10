@@ -33,22 +33,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Security level CORS අනුමත කිරීම
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
-                        // Login සහ Register ඇතුළු v1/users/ හි සියලු endpoints සඳහා access දීම
                         .requestMatchers("/v1/users/**").permitAll()
 
-                        // Dashboard APIs සඳහා access දීම
                         .requestMatchers("/api/v1/orders/**", "/api/v1/dining-tables/**", "/api/v1/reservations/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
 
-                // JWT Stateless Session Management
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -61,7 +57,6 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        // Constructor එක හරහා userDetailsService pass කිරීම (Spring Security 6+ Fix)
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
