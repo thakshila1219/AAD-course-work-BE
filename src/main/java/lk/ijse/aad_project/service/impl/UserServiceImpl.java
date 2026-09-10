@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
             dto.setUsername(user.getUsername());
             dto.setEmail(user.getEmail());
             dto.setPassword(user.getPassword());
-            dto.setRole(user.getRole()); // User Entity එකේ හදපු getRole() method එකෙන් Role එක ගනී
+            dto.setRole(user.getRole()); 
 
             return dto;
         } catch (Exception e) {
