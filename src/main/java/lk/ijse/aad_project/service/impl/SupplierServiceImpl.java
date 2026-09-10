@@ -4,7 +4,7 @@ import lk.ijse.aad_project.dto.SupplierDTO;
 import lk.ijse.aad_project.entity.Supplier;
 import lk.ijse.aad_project.repository.SupplierRepository;
 import lk.ijse.aad_project.service.SupplierService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j; 
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
