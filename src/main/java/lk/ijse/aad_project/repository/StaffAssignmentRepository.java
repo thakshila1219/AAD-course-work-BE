@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment, Long> {
-}
+} 
