@@ -6,4 +6,4 @@ public interface DiningTableService {
     void saveDiningTable(DiningTableDTO diningTableDTO);
     void updateDiningTable(DiningTableDTO diningTableDTO);
     void removeDiningTable(long tableId);
-}
+} 
