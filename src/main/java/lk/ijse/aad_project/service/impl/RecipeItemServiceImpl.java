@@ -6,7 +6,7 @@ import lk.ijse.aad_project.entity.MenuItem;
 import lk.ijse.aad_project.entity.RecipeItem;
 import lk.ijse.aad_project.repository.IngredientRepository;
 import lk.ijse.aad_project.repository.MenuItemRepository;
-import lk.ijse.aad_project.repository.RecipeItemRepository;
+import lk.ijse.aad_project.repository.RecipeItemRepository; 
 import lk.ijse.aad_project.service.RecipeItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
