@@ -1,0 +1,46 @@
+package lk.ijse.aad_project.contant;
+
+public class CommonResponse {
+    private int statusCode;
+    private String message;
+    private Object data; // මේ field එක එකතු කරන්න
+
+    public CommonResponse() {
+    }
+
+    public CommonResponse(int statusCode, String message) {
+        this.statusCode = statusCode;
+        this.message = message;
+    }
+
+    public CommonResponse(int statusCode, String message, Object data) {
+        this.statusCode = statusCode;
+        this.message = message;
+        this.data = data;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    // මේ Getter සහ Setter එක එකතු කරන්න
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+}

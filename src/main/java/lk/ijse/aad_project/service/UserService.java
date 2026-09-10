@@ -1,0 +1,12 @@
+package lk.ijse.aad_project.service;
+
+import lk.ijse.aad_project.dto.UserDTO;
+
+public interface UserService {
+    void saveUser(UserDTO userDTO);
+    void updateUser(UserDTO userDTO);
+    void removeUser(long userId);
+
+    // මේ method එක එකතු කරන්න
+    UserDTO authenticate(String email, String password);
+}
