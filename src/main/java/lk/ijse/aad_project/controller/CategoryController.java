@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.controller;
 
 import lk.ijse.aad_project.dto.CategoryDTO; 
-import lk.ijse.aad_project.service.CategoryService;
+import lk.ijse.aad_project.service.CategoryService; 
 import lk.ijse.aad_project.contant.CommonResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
