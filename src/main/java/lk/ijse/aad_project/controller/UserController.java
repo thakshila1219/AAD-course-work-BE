@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.controller;
 
 import lk.ijse.aad_project.dto.UserDTO;
-import lk.ijse.aad_project.service.UserService;
+import lk.ijse.aad_project.service.UserService; 
 import lk.ijse.aad_project.contant.CommonResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
