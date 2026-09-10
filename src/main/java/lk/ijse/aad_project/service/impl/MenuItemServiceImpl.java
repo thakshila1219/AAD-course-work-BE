@@ -7,7 +7,7 @@ import lk.ijse.aad_project.repository.CategoryRepository;
 import lk.ijse.aad_project.repository.MenuItemRepository;
 import lk.ijse.aad_project.service.MenuItemService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service; 
 
 import java.util.Optional;
 
