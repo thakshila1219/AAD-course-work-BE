@@ -6,7 +6,7 @@ public class CommonResponse {
     private Object data; 
 
     public CommonResponse() {
-    }
+    } 
 
     public CommonResponse(int statusCode, String message) {
         this.statusCode = statusCode;
