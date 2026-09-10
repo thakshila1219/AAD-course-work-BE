@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Data
+@Data 
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiscountCouponDTO {
