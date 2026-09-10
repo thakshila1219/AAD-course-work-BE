@@ -1,7 +1,7 @@
 package lk.ijse.aad_project.enumiration;
 
 public enum UserRole {
-    ADMIN,
+    ADMIN, 
     STAFF,
     MANAGER,
     CHEF
