@@ -23,7 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException("User not found with username: " + username));
 
-        // Default role handles safely without breaking on getRole() getter error
         String roleName = "ROLE_USER";
 
         return new org.springframework.security.core.userdetails.User(
