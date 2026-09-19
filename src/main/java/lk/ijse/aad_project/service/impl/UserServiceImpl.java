@@ -4,13 +4,12 @@ import lk.ijse.aad_project.dto.UserDTO;
 import lk.ijse.aad_project.entity.User;
 import lk.ijse.aad_project.repository.UserRepository;
 import lk.ijse.aad_project.service.UserService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
-@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -21,81 +20,119 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void saveUser(UserDTO userDTO) {
-        log.info("Execute method saveUser");
-        try {
-            User user = new User();
-            user.setUsername(userDTO.getUsername());
-            user.setPassword(userDTO.getPassword());
-            user.setEmail(userDTO.getEmail());
 
-            userRepository.save(user);
-        } catch (Exception e) {
-            log.error("Error in saveUser : {}", e.getMessage());
-            throw e;
-        }
+        User user = new User();
+
+        user.setUsername(userDTO.getUsername());
+        user.setPassword(userDTO.getPassword());
+        user.setEmail(userDTO.getEmail());
+
+        userRepository.save(user);
     }
 
-    @Override
-    public void updateUser(UserDTO userDTO) {
-        log.info("Execute method updateUser");
-        try {
-            Optional<User> optionalUser = userRepository.findById(userDTO.getUserId());
-            if (optionalUser.isEmpty())
-                throw new RuntimeException("Sorry, related user is not found.");
-
-            User user = optionalUser.get();
-            user.setUsername(userDTO.getUsername());
-            user.setPassword(userDTO.getPassword());
-            user.setEmail(userDTO.getEmail());
-
-            userRepository.save(user);
-        } catch (Exception e) {
-            log.error("Error in updateUser : {}", e.getMessage());
-            throw e;
-        }
-    }
 
     @Override
-    public void removeUser(long userId) {
-        log.info("Execute method removeUser");
-        try {
-            Optional<User> optionalUser = userRepository.findById(userId);
-            if (optionalUser.isEmpty())
-                throw new RuntimeException("Sorry, related user is not found.");
+    public List<UserDTO> getAllUsers() {
 
-            userRepository.deleteById(userId);
-        } catch (Exception e) {
-            log.error("Error in removeUser : {}", e.getMessage());
-            throw e;
-        }
-    }
+        List<User> users = userRepository.findAll();
 
-    @Override
-    public UserDTO authenticate(String email, String password) {
-        log.info("Execute method authenticate for email: {}", email);
-        try {
-            Optional<User> optionalUser = userRepository.findByEmail(email);
-            if (optionalUser.isEmpty()) {
-                throw new RuntimeException("User not found with email: " + email);
-            }
+        List<UserDTO> dtoList = new ArrayList<>();
 
-            User user = optionalUser.get();
-
-            if (!user.getPassword().equals(password)) {
-                throw new RuntimeException("Invalid Password");
-            }
+        for (User user : users) {
 
             UserDTO dto = new UserDTO();
+
             dto.setUserId(user.getUserId());
             dto.setUsername(user.getUsername());
             dto.setEmail(user.getEmail());
-            dto.setPassword(user.getPassword());
-            dto.setRole(user.getRole()); // User Entity එකේ හදපු getRole() method එකෙන් Role එක ගනී
 
-            return dto;
-        } catch (Exception e) {
-            log.error("Error in authenticate : {}", e.getMessage());
-            throw e;
+            // Send role
+            dto.setRole(user.getRole());
+
+            // Never send password
+            dto.setPassword(null);
+
+            dtoList.add(dto);
         }
+
+        return dtoList;
+    }
+
+
+    @Override
+    public void updateUser(UserDTO userDTO) {
+
+        if (userDTO.getUserId() == null) {
+            throw new RuntimeException("User ID is required");
+        }
+
+        User user = userRepository
+                .findById(userDTO.getUserId())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        user.setUsername(userDTO.getUsername());
+        user.setEmail(userDTO.getEmail());
+
+        if (userDTO.getPassword() != null &&
+                !userDTO.getPassword().isBlank()) {
+
+            user.setPassword(userDTO.getPassword());
+        }
+
+        userRepository.save(user);
+    }
+
+
+    @Override
+    public void removeUser(long userId) {
+
+        if (!userRepository.existsById(userId)) {
+
+            throw new RuntimeException("User not found");
+        }
+
+        userRepository.deleteById(userId);
+    }
+
+
+    @Override
+    public UserDTO authenticate(
+            String email,
+            String password
+    ) {
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Invalid email or password"
+                        )
+                );
+
+        if (!user.getPassword().equals(password)) {
+
+            throw new RuntimeException(
+                    "Invalid email or password"
+            );
+        }
+
+
+        UserDTO dto = new UserDTO();
+
+        dto.setUserId(user.getUserId());
+
+        dto.setUsername(user.getUsername());
+
+        dto.setEmail(user.getEmail());
+
+        // IMPORTANT
+        dto.setRole(user.getRole());
+
+        // Don't return password
+        dto.setPassword(null);
+
+        return dto;
     }
 }

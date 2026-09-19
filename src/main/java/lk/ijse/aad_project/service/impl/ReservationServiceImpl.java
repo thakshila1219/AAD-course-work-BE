@@ -11,6 +11,7 @@ import lk.ijse.aad_project.service.ReservationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,96 +22,467 @@ public class ReservationServiceImpl implements ReservationService {
     private final UserRepository userRepository;
     private final DiningTableRepository diningTableRepository;
 
-    public ReservationServiceImpl(ReservationRepository reservationRepository, UserRepository userRepository, DiningTableRepository diningTableRepository) {
+
+    public ReservationServiceImpl(
+            ReservationRepository reservationRepository,
+            UserRepository userRepository,
+            DiningTableRepository diningTableRepository
+    ) {
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
         this.diningTableRepository = diningTableRepository;
     }
 
+
+    // ============================================================
+    // SAVE RESERVATION
+    // Only CUSTOMER users can create reservations
+    // ============================================================
+
     @Override
     public void saveReservation(ReservationDTO reservationDTO) {
+
         log.info("Execute method saveReservation");
+
         try {
-            Reservation reservation = new Reservation();
-            reservation.setReservationTime(reservationDTO.getReservationTime());
-            reservation.setStatus(reservationDTO.getStatus());
 
-            Optional<User> optionalUser = userRepository.findById(reservationDTO.getUserId());
-            if (optionalUser.isEmpty())
-                throw new RuntimeException("Sorry, related user is not found.");
-            reservation.setUser(optionalUser.get());
+            // ----------------------------------------------------
+            // Find User
+            // ----------------------------------------------------
 
-            Optional<DiningTable> optionalTable = diningTableRepository.findById(reservationDTO.getTableId());
-            if (optionalTable.isEmpty())
-                throw new RuntimeException("Sorry, related dining table is not found.");
-            reservation.setDiningTable(optionalTable.get());
+            Optional<User> optionalUser =
+                    userRepository.findById(
+                            reservationDTO.getUserId()
+                    );
 
-            reservationRepository.save(reservation);
-        } catch (Exception e) {
-            log.error("Error in saveReservation : " + e.getMessage());
-            throw e;
-        }
-    }
+            if (optionalUser.isEmpty()) {
 
-    @Override
-    public void updateReservation(ReservationDTO reservationDTO) {
-        log.info("Execute method updateReservation");
-        try {
-            Optional<Reservation> optionalReservation = reservationRepository.findById(reservationDTO.getReservationId());
-            if (optionalReservation.isEmpty())
-                throw new RuntimeException("Sorry, related reservation is not found.");
-
-            Reservation reservation = optionalReservation.get();
-            reservation.setReservationTime(reservationDTO.getReservationTime());
-            reservation.setStatus(reservationDTO.getStatus());
-
-            Optional<User> optionalUser = userRepository.findById(reservationDTO.getUserId());
-            if (optionalUser.isEmpty())
-                throw new RuntimeException("Sorry, related user is not found.");
-            reservation.setUser(optionalUser.get());
-
-            Optional<DiningTable> optionalTable = diningTableRepository.findById(reservationDTO.getTableId());
-            if (optionalTable.isEmpty())
-                throw new RuntimeException("Sorry, related dining table is not found.");
-            reservation.setDiningTable(optionalTable.get());
-
-            reservationRepository.save(reservation);
-        } catch (Exception e) {
-            log.error("Error in updateReservation : " + e.getMessage());
-            throw e;
-        }
-    }
-
-    @Override
-    public void removeReservation(long reservationId) {
-        log.info("Execute method removeReservation");
-        try {
-            Optional<Reservation> optionalReservation = reservationRepository.findById(reservationId);
-            if (optionalReservation.isEmpty())
-                throw new RuntimeException("Sorry, related reservation is not found.");
-
-            reservationRepository.deleteById(reservationId);
-        } catch (Exception e) {
-            log.error("Error in removeReservation : " + e.getMessage());
-            throw e;
-        }
-    }
-
-    @Override
-    public void cancelReservation(long reservationId) {
-        log.info("Execute method cancelReservation");
-        try {
-            Optional<Reservation> optionalReservation = reservationRepository.findById(reservationId);
-            if (optionalReservation.isEmpty()) {
-                throw new RuntimeException("Sorry, related reservation is not found.");
+                throw new RuntimeException(
+                        "Sorry, related user is not found."
+                );
             }
 
-            Reservation reservation = optionalReservation.get();
-            reservation.setStatus("CANCELLED");
+            User user = optionalUser.get();
 
-            reservationRepository.save(reservation);
+
+            // ----------------------------------------------------
+            // Check whether user is CUSTOMER
+            // ----------------------------------------------------
+
+            boolean isCustomer =
+                    user.getUserRoleList() != null
+                            && user.getUserRoleList()
+                            .stream()
+                            .anyMatch(userRole ->
+                                    userRole.getRole() != null
+                                            && "CUSTOMER".equalsIgnoreCase(
+                                            userRole.getRole().getRoleName()
+                                    )
+                            );
+
+
+            if (!isCustomer) {
+
+                throw new RuntimeException(
+                        "Only customers can create reservations."
+                );
+            }
+
+
+            // ----------------------------------------------------
+            // Find Dining Table
+            // ----------------------------------------------------
+
+            Optional<DiningTable> optionalTable =
+                    diningTableRepository.findById(
+                            reservationDTO.getTableId()
+                    );
+
+            if (optionalTable.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related dining table is not found."
+                );
+            }
+
+
+            DiningTable diningTable =
+                    optionalTable.get();
+
+
+            // ----------------------------------------------------
+            // Create Reservation
+            // ----------------------------------------------------
+
+            Reservation reservation =
+                    new Reservation();
+
+            reservation.setReservationTime(
+                    reservationDTO.getReservationTime()
+            );
+
+            reservation.setStatus(
+                    reservationDTO.getStatus()
+            );
+
+            reservation.setUser(user);
+
+            reservation.setDiningTable(
+                    diningTable
+            );
+
+
+            // ----------------------------------------------------
+            // Save
+            // ----------------------------------------------------
+
+            reservationRepository.save(
+                    reservation
+            );
+
+
+            log.info(
+                    "Reservation saved successfully. ID: {}",
+                    reservation.getReservationId()
+            );
+
         } catch (Exception e) {
-            log.error("Error in cancelReservation : " + e.getMessage());
+
+            log.error(
+                    "Error in saveReservation : {}",
+                    e.getMessage()
+            );
+
+            throw e;
+        }
+    }
+
+
+    // ============================================================
+    // UPDATE RESERVATION
+    // ============================================================
+
+    @Override
+    public void updateReservation(
+            ReservationDTO reservationDTO
+    ) {
+
+        log.info("Execute method updateReservation");
+
+        try {
+
+            // ----------------------------------------------------
+            // Find Reservation
+            // ----------------------------------------------------
+
+            Optional<Reservation> optionalReservation =
+                    reservationRepository.findById(
+                            reservationDTO.getReservationId()
+                    );
+
+            if (optionalReservation.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related reservation is not found."
+                );
+            }
+
+
+            Reservation reservation =
+                    optionalReservation.get();
+
+
+            // ----------------------------------------------------
+            // Update Reservation Time
+            // ----------------------------------------------------
+
+            reservation.setReservationTime(
+                    reservationDTO.getReservationTime()
+            );
+
+
+            // ----------------------------------------------------
+            // Update Status
+            // ----------------------------------------------------
+
+            reservation.setStatus(
+                    reservationDTO.getStatus()
+            );
+
+
+            // ----------------------------------------------------
+            // Find User
+            // ----------------------------------------------------
+
+            Optional<User> optionalUser =
+                    userRepository.findById(
+                            reservationDTO.getUserId()
+                    );
+
+            if (optionalUser.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related user is not found."
+                );
+            }
+
+
+            User user =
+                    optionalUser.get();
+
+
+            // ----------------------------------------------------
+            // Update User
+            // ----------------------------------------------------
+
+            reservation.setUser(user);
+
+
+            // ----------------------------------------------------
+            // Find Dining Table
+            // ----------------------------------------------------
+
+            Optional<DiningTable> optionalTable =
+                    diningTableRepository.findById(
+                            reservationDTO.getTableId()
+                    );
+
+            if (optionalTable.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related dining table is not found."
+                );
+            }
+
+
+            DiningTable diningTable =
+                    optionalTable.get();
+
+
+            // ----------------------------------------------------
+            // Update Dining Table
+            // ----------------------------------------------------
+
+            reservation.setDiningTable(
+                    diningTable
+            );
+
+
+            // ----------------------------------------------------
+            // Save Updated Reservation
+            // ----------------------------------------------------
+
+            reservationRepository.save(
+                    reservation
+            );
+
+
+            log.info(
+                    "Reservation updated successfully. ID: {}",
+                    reservation.getReservationId()
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Error in updateReservation : {}",
+                    e.getMessage()
+            );
+
+            throw e;
+        }
+    }
+
+
+    // ============================================================
+    // DELETE RESERVATION
+    // ============================================================
+
+    @Override
+    public void removeReservation(
+            long reservationId
+    ) {
+
+        log.info("Execute method removeReservation");
+
+        try {
+
+            Optional<Reservation> optionalReservation =
+                    reservationRepository.findById(
+                            reservationId
+                    );
+
+            if (optionalReservation.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related reservation is not found."
+                );
+            }
+
+
+            reservationRepository.deleteById(
+                    reservationId
+            );
+
+
+            log.info(
+                    "Reservation deleted successfully. ID: {}",
+                    reservationId
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Error in removeReservation : {}",
+                    e.getMessage()
+            );
+
+            throw e;
+        }
+    }
+
+
+    // ============================================================
+    // CANCEL RESERVATION
+    // ============================================================
+
+    @Override
+    public void cancelReservation(
+            long reservationId
+    ) {
+
+        log.info("Execute method cancelReservation");
+
+        try {
+
+            Optional<Reservation> optionalReservation =
+                    reservationRepository.findById(
+                            reservationId
+                    );
+
+            if (optionalReservation.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related reservation is not found."
+                );
+            }
+
+
+            Reservation reservation =
+                    optionalReservation.get();
+
+
+            reservation.setStatus(
+                    "CANCELLED"
+            );
+
+
+            reservationRepository.save(
+                    reservation
+            );
+
+
+            log.info(
+                    "Reservation cancelled successfully. ID: {}",
+                    reservationId
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Error in cancelReservation : {}",
+                    e.getMessage()
+            );
+
+            throw e;
+        }
+    }
+
+
+    // ============================================================
+    // GET ALL RESERVATIONS
+    // ============================================================
+
+    @Override
+    public List<ReservationDTO> getAllReservations() {
+
+        log.info("Execute method getAllReservations");
+
+        try {
+
+            List<Reservation> reservations =
+                    reservationRepository.findAll();
+
+
+            return reservations.stream()
+                    .map(reservation -> {
+
+                        String username = "-";
+
+                        String tableNumber = "-";
+
+
+                        // ------------------------------------------------
+                        // Get Username
+                        // ------------------------------------------------
+
+                        if (reservation.getUser() != null) {
+
+                            username =
+                                    reservation
+                                            .getUser()
+                                            .getUsername();
+                        }
+
+
+                        // ------------------------------------------------
+                        // Get Table Number
+                        // ------------------------------------------------
+
+                        if (reservation.getDiningTable() != null) {
+
+                            tableNumber =
+                                    reservation
+                                            .getDiningTable()
+                                            .getTableNumber();
+                        }
+
+
+                        // ------------------------------------------------
+                        // Create DTO
+                        // ------------------------------------------------
+
+                        return new ReservationDTO(
+
+                                reservation.getReservationId(),
+
+                                reservation.getReservationTime(),
+
+                                reservation.getStatus(),
+
+                                reservation.getUser() != null
+                                        ? reservation.getUser().getUserId()
+                                        : 0,
+
+                                reservation.getDiningTable() != null
+                                        ? reservation.getDiningTable().getTableId()
+                                        : 0,
+
+                                username,
+
+                                tableNumber
+                        );
+
+                    })
+                    .toList();
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Error in getAllReservations : {}",
+                    e.getMessage()
+            );
+
             throw e;
         }
     }

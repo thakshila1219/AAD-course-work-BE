@@ -8,12 +8,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiningTableDTO {
+
     private long tableId;
     private String tableNumber;
     private int capacity;
     private String status;
 
-    public DiningTableDTO(String tableNumber, int capacity, String status) {
+    public DiningTableDTO(
+            String tableNumber,
+            int capacity,
+            String status) {
+
         this.tableNumber = tableNumber;
         this.capacity = capacity;
         this.status = status;

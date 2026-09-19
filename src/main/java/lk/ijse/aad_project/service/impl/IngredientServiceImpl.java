@@ -6,80 +6,316 @@ import lk.ijse.aad_project.entity.Supplier;
 import lk.ijse.aad_project.repository.IngredientRepository;
 import lk.ijse.aad_project.repository.SupplierRepository;
 import lk.ijse.aad_project.service.IngredientService;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @Slf4j
-public class IngredientServiceImpl implements IngredientService {
+public class IngredientServiceImpl
+        implements IngredientService {
+
 
     private final IngredientRepository ingredientRepository;
+
     private final SupplierRepository supplierRepository;
 
-    public IngredientServiceImpl(IngredientRepository ingredientRepository, SupplierRepository supplierRepository) {
-        this.ingredientRepository = ingredientRepository;
-        this.supplierRepository = supplierRepository;
+
+    public IngredientServiceImpl(
+            IngredientRepository ingredientRepository,
+            SupplierRepository supplierRepository
+    ) {
+
+        this.ingredientRepository =
+                ingredientRepository;
+
+        this.supplierRepository =
+                supplierRepository;
     }
 
+
+    // =========================================================
+    // 1. SAVE INGREDIENT
+    // =========================================================
+
     @Override
-    public void saveIngredient(IngredientDTO ingredientDTO) {
-        log.info("Execute method saveIngredient");
+    public void saveIngredient(
+            IngredientDTO ingredientDTO
+    ) {
+
+        log.info(
+                "Execute method saveIngredient"
+        );
+
         try {
-            Ingredient ingredient = new Ingredient();
-            ingredient.setName(ingredientDTO.getName());
-            ingredient.setQuantityOnHand(ingredientDTO.getQuantityOnHand());
-            ingredient.setUnit(ingredientDTO.getUnit());
 
-            Optional<Supplier> optionalSupplier = supplierRepository.findById(ingredientDTO.getSupplierId());
-            if (optionalSupplier.isEmpty())
-                throw new RuntimeException("Sorry, related supplier is not found.");
+            Ingredient ingredient =
+                    new Ingredient();
 
-            ingredient.setSupplier(optionalSupplier.get());
-            ingredientRepository.save(ingredient);
+
+            ingredient.setName(
+                    ingredientDTO.getName()
+            );
+
+            ingredient.setQuantityOnHand(
+                    ingredientDTO.getQuantityOnHand()
+            );
+
+            ingredient.setUnit(
+                    ingredientDTO.getUnit()
+            );
+
+
+            Optional<Supplier> optionalSupplier =
+                    supplierRepository.findById(
+                            ingredientDTO.getSupplierId()
+                    );
+
+
+            if (optionalSupplier.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related supplier is not found."
+                );
+            }
+
+
+            ingredient.setSupplier(
+                    optionalSupplier.get()
+            );
+
+
+            ingredientRepository.save(
+                    ingredient
+            );
+
         } catch (Exception e) {
-            log.error("Error in saveIngredient : " + e.getMessage());
+
+            log.error(
+                    "Error in saveIngredient : {}",
+                    e.getMessage()
+            );
+
             throw e;
         }
     }
 
+
+    // =========================================================
+    // 2. GET ALL INGREDIENTS
+    // =========================================================
+
     @Override
-    public void updateIngredient(IngredientDTO ingredientDTO) {
-        log.info("Execute method updateIngredient");
+    public List<IngredientDTO> getAllIngredients() {
+
+        log.info(
+                "Execute method getAllIngredients"
+        );
+
         try {
-            Optional<Ingredient> optionalIngredient = ingredientRepository.findById(ingredientDTO.getIngredientId());
-            if (optionalIngredient.isEmpty())
-                throw new RuntimeException("Sorry, related ingredient is not found.");
 
-            Ingredient ingredient = optionalIngredient.get();
-            ingredient.setName(ingredientDTO.getName());
-            ingredient.setQuantityOnHand(ingredientDTO.getQuantityOnHand());
-            ingredient.setUnit(ingredientDTO.getUnit());
+            List<Ingredient> ingredients =
+                    ingredientRepository.findAll();
 
-            Optional<Supplier> optionalSupplier = supplierRepository.findById(ingredientDTO.getSupplierId());
-            if (optionalSupplier.isEmpty())
-                throw new RuntimeException("Sorry, related supplier is not found.");
 
-            ingredient.setSupplier(optionalSupplier.get());
-            ingredientRepository.save(ingredient);
+            List<IngredientDTO> dtoList =
+                    new ArrayList<>();
+
+
+            for (
+                    Ingredient ingredient :
+                    ingredients
+            ) {
+
+                IngredientDTO dto =
+                        new IngredientDTO();
+
+
+                dto.setIngredientId(
+                        ingredient.getIngredientId()
+                );
+
+                dto.setName(
+                        ingredient.getName()
+                );
+
+                dto.setQuantityOnHand(
+                        ingredient.getQuantityOnHand()
+                );
+
+                dto.setUnit(
+                        ingredient.getUnit()
+                );
+
+
+                /*
+                 * Get Supplier ID from the
+                 * Ingredient → Supplier relationship.
+                 */
+                if (
+                        ingredient.getSupplier() != null
+                ) {
+
+                    dto.setSupplierId(
+                            ingredient
+                                    .getSupplier()
+                                    .getSupplierId()
+                    );
+
+                } else {
+
+                    dto.setSupplierId(0);
+                }
+
+
+                dtoList.add(dto);
+            }
+
+
+            return dtoList;
+
         } catch (Exception e) {
-            log.error("Error in updateIngredient : " + e.getMessage());
+
+            log.error(
+                    "Error in getAllIngredients : {}",
+                    e.getMessage()
+            );
+
             throw e;
         }
     }
 
-    @Override
-    public void removeIngredient(long ingredientId) {
-        log.info("Execute method removeIngredient");
-        try {
-            Optional<Ingredient> optionalIngredient = ingredientRepository.findById(ingredientId);
-            if (optionalIngredient.isEmpty())
-                throw new RuntimeException("Sorry, related ingredient is not found.");
 
-            ingredientRepository.deleteById(ingredientId);
+    // =========================================================
+    // 3. UPDATE INGREDIENT
+    // =========================================================
+
+    @Override
+    public void updateIngredient(
+            IngredientDTO ingredientDTO
+    ) {
+
+        log.info(
+                "Execute method updateIngredient"
+        );
+
+        try {
+
+            Optional<Ingredient> optionalIngredient =
+                    ingredientRepository.findById(
+                            ingredientDTO.getIngredientId()
+                    );
+
+
+            if (
+                    optionalIngredient.isEmpty()
+            ) {
+
+                throw new RuntimeException(
+                        "Sorry, related ingredient is not found."
+                );
+            }
+
+
+            Ingredient ingredient =
+                    optionalIngredient.get();
+
+
+            ingredient.setName(
+                    ingredientDTO.getName()
+            );
+
+            ingredient.setQuantityOnHand(
+                    ingredientDTO.getQuantityOnHand()
+            );
+
+            ingredient.setUnit(
+                    ingredientDTO.getUnit()
+            );
+
+
+            Optional<Supplier> optionalSupplier =
+                    supplierRepository.findById(
+                            ingredientDTO.getSupplierId()
+                    );
+
+
+            if (optionalSupplier.isEmpty()) {
+
+                throw new RuntimeException(
+                        "Sorry, related supplier is not found."
+                );
+            }
+
+
+            ingredient.setSupplier(
+                    optionalSupplier.get()
+            );
+
+
+            ingredientRepository.save(
+                    ingredient
+            );
+
         } catch (Exception e) {
-            log.error("Error in removeIngredient : " + e.getMessage());
+
+            log.error(
+                    "Error in updateIngredient : {}",
+                    e.getMessage()
+            );
+
+            throw e;
+        }
+    }
+
+
+    // =========================================================
+    // 4. DELETE INGREDIENT
+    // =========================================================
+
+    @Override
+    public void removeIngredient(
+            long ingredientId
+    ) {
+
+        log.info(
+                "Execute method removeIngredient"
+        );
+
+        try {
+
+            Optional<Ingredient> optionalIngredient =
+                    ingredientRepository.findById(
+                            ingredientId
+                    );
+
+
+            if (
+                    optionalIngredient.isEmpty()
+            ) {
+
+                throw new RuntimeException(
+                        "Sorry, related ingredient is not found."
+                );
+            }
+
+
+            ingredientRepository.deleteById(
+                    ingredientId
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Error in removeIngredient : {}",
+                    e.getMessage()
+            );
+
             throw e;
         }
     }

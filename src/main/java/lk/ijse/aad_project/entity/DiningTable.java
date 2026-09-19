@@ -10,10 +10,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 public class DiningTable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long tableId;
+
     private String tableNumber;
+
     private int capacity;
+
     private String status;
 }

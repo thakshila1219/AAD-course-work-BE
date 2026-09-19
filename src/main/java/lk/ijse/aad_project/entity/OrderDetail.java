@@ -10,10 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 public class OrderDetail {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long orderDetailId;
+
     private int quantity;
+
     private double unitPrice;
 
     @ManyToOne

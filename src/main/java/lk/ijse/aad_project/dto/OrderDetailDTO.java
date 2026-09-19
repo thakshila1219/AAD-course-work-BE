@@ -8,13 +8,23 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderDetailDTO {
+
     private long orderDetailId;
+
     private int quantity;
+
     private double unitPrice;
+
     private long orderId;
+
     private long menuItemId;
 
-    public OrderDetailDTO(int quantity, double unitPrice, long orderId, long menuItemId) {
+    public OrderDetailDTO(
+            int quantity,
+            double unitPrice,
+            long orderId,
+            long menuItemId
+    ) {
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.orderId = orderId;

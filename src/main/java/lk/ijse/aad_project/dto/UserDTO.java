@@ -8,9 +8,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO {
-    private Long userId; // long වෙනුවට Long (Wrapper Class) ලෙස වෙනස් කරන්න
+
+    private Long userId;
+
     private String username;
+
     private String password;
+
     private String email;
+
     private String role;
-} 
+}

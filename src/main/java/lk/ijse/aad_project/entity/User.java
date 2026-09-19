@@ -1,10 +1,11 @@
 package lk.ijse.aad_project.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty; // <-- මේ import එක එකතු කරන්න
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
@@ -12,34 +13,70 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userId;
+
     private String username;
+
     private String password;
+
     private String email;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.EAGER
+    )
     private List<UserRole> userRoleList;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
     private List<Order> orderList;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
     private List<Reservation> reservationList;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
     private List<StaffAssignment> staffAssignmentList;
 
-    // JSON Response එකට direct "role" field එකක් විදියට එකතු වීමට:
+
+    /**
+     * Get user's role.
+     *
+     * This method adds a direct "role" property
+     * to the JSON response.
+     */
     @JsonProperty("role")
     public String getRole() {
+
         if (userRoleList != null && !userRoleList.isEmpty()) {
-            // UserRole ඇතුළේ Role object එක සහ එහි roleName field එක ඇති බව තහවුරු කරගන්න
-            if (userRoleList.get(0).getRole() != null) {
-                return userRoleList.get(0).getRole().getRoleName();
+
+            UserRole userRole = userRoleList.get(0);
+
+            if (userRole != null && userRole.getRole() != null) {
+
+                String roleName = userRole.getRole().getRoleName();
+
+                if (roleName != null && !roleName.isBlank()) {
+                    return roleName;
+                }
             }
         }
-        return "CUSTOMER"; // Default fallback role
+
+        // Default role
+        return "CUSTOMER";
     }
 }

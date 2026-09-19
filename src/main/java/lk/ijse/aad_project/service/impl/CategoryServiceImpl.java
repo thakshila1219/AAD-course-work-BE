@@ -7,6 +7,8 @@ import lk.ijse.aad_project.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -64,6 +66,28 @@ public class CategoryServiceImpl implements CategoryService {
             categoryRepository.deleteById(categoryId);
         } catch (Exception e) {
             log.error("Error in removeCategory : " + e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public List<CategoryDTO> getAllCategories() {
+        log.info("Execute method getAllCategories");
+        try {
+            List<Category> categoryList = categoryRepository.findAll();
+            List<CategoryDTO> categoryDTOList = new ArrayList<>();
+
+            for (Category category : categoryList) {
+                CategoryDTO dto = new CategoryDTO();
+                dto.setCategoryId(category.getCategoryId());
+                dto.setCategoryName(category.getCategoryName());
+                dto.setDescription(category.getDescription());
+
+                categoryDTOList.add(dto);
+            }
+            return categoryDTOList;
+        } catch (Exception e) {
+            log.error("Error in getAllCategories : " + e.getMessage());
             throw e;
         }
     }
