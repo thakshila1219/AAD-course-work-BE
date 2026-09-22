@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface OrderService {
 
-    void saveOrder(OrderDTO orderDTO);
-
+    long saveOrder(OrderDTO orderDTO);
+    
     void updateOrder(OrderDTO orderDTO);
 
     void removeOrder(long orderId);

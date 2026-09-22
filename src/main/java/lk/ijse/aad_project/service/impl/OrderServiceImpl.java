@@ -38,7 +38,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void saveOrder(OrderDTO orderDTO) {
+    public long saveOrder(OrderDTO orderDTO) {
 
         log.info("Execute method saveOrder");
 
@@ -56,7 +56,6 @@ public class OrderServiceImpl implements OrderService {
                             : orderDTO.getStatus()
             );
 
-            // Find customer
             Optional<User> optionalUser =
                     userRepository.findById(orderDTO.getUserId());
 
@@ -68,7 +67,6 @@ public class OrderServiceImpl implements OrderService {
 
             User user = optionalUser.get();
 
-            // Only CUSTOMER can create orders
             boolean isCustomer =
                     user.getUserRoleList() != null
                             && user.getUserRoleList()
@@ -88,7 +86,6 @@ public class OrderServiceImpl implements OrderService {
 
             order.setUser(user);
 
-            // Find dining table
             if (orderDTO.getTableId() > 0) {
 
                 Optional<DiningTable> optionalTable =
@@ -105,7 +102,6 @@ public class OrderServiceImpl implements OrderService {
                 order.setDiningTable(optionalTable.get());
             }
 
-            // Find discount coupon if provided
             if (orderDTO.getDiscountCouponId() > 0) {
 
                 Optional<DiscountCoupon> optionalCoupon =
@@ -122,7 +118,10 @@ public class OrderServiceImpl implements OrderService {
                 order.setDiscountCoupon(optionalCoupon.get());
             }
 
-            orderRepository.save(order);
+            Order savedOrder =
+                    orderRepository.save(order);
+
+            return savedOrder.getOrderId();
 
         } catch (Exception e) {
 
@@ -158,7 +157,6 @@ public class OrderServiceImpl implements OrderService {
             order.setTotalAmount(orderDTO.getTotalAmount());
             order.setStatus(orderDTO.getStatus());
 
-            // Update user
             if (orderDTO.getUserId() > 0) {
 
                 Optional<User> optionalUser =
@@ -175,7 +173,6 @@ public class OrderServiceImpl implements OrderService {
                 order.setUser(optionalUser.get());
             }
 
-            // Update dining table
             if (orderDTO.getTableId() > 0) {
 
                 Optional<DiningTable> optionalTable =
@@ -192,7 +189,6 @@ public class OrderServiceImpl implements OrderService {
                 order.setDiningTable(optionalTable.get());
             }
 
-            // Update discount coupon
             if (orderDTO.getDiscountCouponId() > 0) {
 
                 Optional<DiscountCoupon> optionalCoupon =
@@ -206,7 +202,9 @@ public class OrderServiceImpl implements OrderService {
                     );
                 }
 
-                order.setDiscountCoupon(optionalCoupon.get());
+                order.setDiscountCoupon(
+                        optionalCoupon.get()
+                );
 
             } else {
 
@@ -302,7 +300,8 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("Execute method getAllOrders");
 
-        List<Order> orders = orderRepository.findAll();
+        List<Order> orders =
+                orderRepository.findAll();
 
         return orders.stream()
                 .map(order -> {
@@ -314,7 +313,6 @@ public class OrderServiceImpl implements OrderService {
                     long tableId = 0;
                     long discountCouponId = 0;
 
-                    // User details
                     if (order.getUser() != null) {
 
                         userId =
@@ -324,17 +322,16 @@ public class OrderServiceImpl implements OrderService {
                                 order.getUser().getUsername();
                     }
 
-                    // Dining table details
                     if (order.getDiningTable() != null) {
 
                         tableId =
                                 order.getDiningTable().getTableId();
 
                         tableNumber =
-                                order.getDiningTable().getTableNumber();
+                                order.getDiningTable()
+                                        .getTableNumber();
                     }
 
-                    // Discount coupon details
                     if (order.getDiscountCoupon() != null) {
 
                         discountCouponId =
@@ -381,7 +378,6 @@ public class OrderServiceImpl implements OrderService {
         long tableId = 0;
         long discountCouponId = 0;
 
-        // User details
         if (order.getUser() != null) {
 
             userId =
@@ -391,7 +387,6 @@ public class OrderServiceImpl implements OrderService {
                     order.getUser().getUsername();
         }
 
-        // Dining table details
         if (order.getDiningTable() != null) {
 
             tableId =
@@ -401,7 +396,6 @@ public class OrderServiceImpl implements OrderService {
                     order.getDiningTable().getTableNumber();
         }
 
-        // Discount coupon details
         if (order.getDiscountCoupon() != null) {
 
             discountCouponId =

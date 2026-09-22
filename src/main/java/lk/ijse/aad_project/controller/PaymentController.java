@@ -3,8 +3,11 @@ package lk.ijse.aad_project.controller;
 import lk.ijse.aad_project.dto.PaymentDTO;
 import lk.ijse.aad_project.service.PaymentService;
 import lk.ijse.aad_project.contant.CommonResponse;
+
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static lk.ijse.aad_project.contant.ResponseMessage.SUCCESS_MESSAGE;
 import static lk.ijse.aad_project.contant.ResponseStatusCode.OPERATION_SUCCESS;
@@ -19,15 +22,34 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<PaymentDTO> getAllPayments() {
+        return paymentService.getAllPayments();
+    }
+
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public CommonResponse savePayment(@RequestBody PaymentDTO paymentDTO){
+    public CommonResponse savePayment(
+            @RequestBody PaymentDTO paymentDTO
+    ) {
+
         paymentService.savePayment(paymentDTO);
-        return new CommonResponse(OPERATION_SUCCESS, SUCCESS_MESSAGE);
+
+        return new CommonResponse(
+                OPERATION_SUCCESS,
+                SUCCESS_MESSAGE
+        );
     }
 
     @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public CommonResponse updatePayment(@RequestBody PaymentDTO paymentDTO){
+    public CommonResponse updatePayment(
+            @RequestBody PaymentDTO paymentDTO
+    ) {
+
         paymentService.updatePayment(paymentDTO);
-        return new CommonResponse(OPERATION_SUCCESS, SUCCESS_MESSAGE);
+
+        return new CommonResponse(
+                OPERATION_SUCCESS,
+                SUCCESS_MESSAGE
+        );
     }
 }

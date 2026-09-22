@@ -1,8 +1,8 @@
 package lk.ijse.aad_project.controller;
 
-import lk.ijse.aad_project.contant.CommonResponse;
 import lk.ijse.aad_project.dto.OrderDTO;
 import lk.ijse.aad_project.service.OrderService;
+import lk.ijse.aad_project.contant.CommonResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,19 +26,14 @@ public class OrderController {
     @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public CommonResponse saveOrder(
+    public long saveOrder(
             @RequestBody OrderDTO orderDTO
     ) {
 
-        orderService.saveOrder(orderDTO);
-
-        return new CommonResponse(
-                OPERATION_SUCCESS,
-                SUCCESS_MESSAGE
-        );
+        return orderService.saveOrder(orderDTO);
     }
 
-    // Get all orders - Admin can use this
+    // Get all orders
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
