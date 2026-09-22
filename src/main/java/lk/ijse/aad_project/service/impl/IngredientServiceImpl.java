@@ -4,6 +4,7 @@ import lk.ijse.aad_project.dto.IngredientDTO;
 import lk.ijse.aad_project.entity.Ingredient;
 import lk.ijse.aad_project.entity.Supplier;
 import lk.ijse.aad_project.repository.IngredientRepository;
+import lk.ijse.aad_project.repository.RecipeItemRepository;
 import lk.ijse.aad_project.repository.SupplierRepository;
 import lk.ijse.aad_project.service.IngredientService;
 
@@ -25,10 +26,13 @@ public class IngredientServiceImpl
 
     private final SupplierRepository supplierRepository;
 
+    private final RecipeItemRepository recipeItemRepository;
+
 
     public IngredientServiceImpl(
             IngredientRepository ingredientRepository,
-            SupplierRepository supplierRepository
+            SupplierRepository supplierRepository,
+            RecipeItemRepository recipeItemRepository
     ) {
 
         this.ingredientRepository =
@@ -36,6 +40,9 @@ public class IngredientServiceImpl
 
         this.supplierRepository =
                 supplierRepository;
+
+        this.recipeItemRepository =
+                recipeItemRepository;
     }
 
 
@@ -153,10 +160,10 @@ public class IngredientServiceImpl
                 );
 
 
-                /*
-                 * Get Supplier ID from the
-                 * Ingredient → Supplier relationship.
-                 */
+                // =================================================
+                // GET SUPPLIER ID
+                // =================================================
+
                 if (
                         ingredient.getSupplier() != null
                 ) {
@@ -173,7 +180,69 @@ public class IngredientServiceImpl
                 }
 
 
-                dtoList.add(dto);
+                // =================================================
+                // GET CATEGORY
+                //
+                // Ingredient
+                //      ↓
+                // RecipeItem
+                //      ↓
+                // MenuItem
+                //      ↓
+                // Category
+                // =================================================
+
+                List<String> categoryNames =
+                        recipeItemRepository
+                                .findCategoryNamesByIngredientId(
+                                        ingredient.getIngredientId()
+                                );
+
+
+                if (
+                        categoryNames != null &&
+                                !categoryNames.isEmpty()
+                ) {
+
+                    dto.setCategoryName(
+                            String.join(
+                                    ", ",
+                                    categoryNames
+                            )
+                    );
+
+                } else {
+
+                    dto.setCategoryName("-");
+                }
+
+
+                // =================================================
+                // SET CATEGORY NAME
+                // =================================================
+
+                if (
+                        !categoryNames.isEmpty()
+                ) {
+
+                    dto.setCategoryName(
+                            String.join(
+                                    ", ",
+                                    categoryNames
+                            )
+                    );
+
+                } else {
+
+                    dto.setCategoryName(
+                            "-"
+                    );
+                }
+
+
+                dtoList.add(
+                        dto
+                );
             }
 
 
@@ -245,7 +314,9 @@ public class IngredientServiceImpl
                     );
 
 
-            if (optionalSupplier.isEmpty()) {
+            if (
+                    optionalSupplier.isEmpty()
+            ) {
 
                 throw new RuntimeException(
                         "Sorry, related supplier is not found."
