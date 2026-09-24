@@ -9,9 +9,13 @@ import lk.ijse.aad_project.repository.DiscountCouponRepository;
 import lk.ijse.aad_project.repository.DiningTableRepository;
 import lk.ijse.aad_project.repository.OrderRepository;
 import lk.ijse.aad_project.repository.UserRepository;
+import lk.ijse.aad_project.service.EmailService;
 import lk.ijse.aad_project.service.OrderService;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,17 +28,20 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final DiningTableRepository diningTableRepository;
     private final DiscountCouponRepository discountCouponRepository;
+    private final EmailService emailService;
 
     public OrderServiceImpl(
             OrderRepository orderRepository,
             UserRepository userRepository,
             DiningTableRepository diningTableRepository,
-            DiscountCouponRepository discountCouponRepository
+            DiscountCouponRepository discountCouponRepository,
+            EmailService emailService
     ) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.diningTableRepository = diningTableRepository;
         this.discountCouponRepository = discountCouponRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -224,6 +231,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public void updateOrderStatus(OrderDTO orderDTO) {
 
         log.info("Execute method updateOrderStatus");
@@ -243,17 +251,63 @@ public class OrderServiceImpl implements OrderService {
 
             Order order = optionalOrder.get();
 
-            if (orderDTO.getStatus() == null
-                    || orderDTO.getStatus().isBlank()) {
+            String oldStatus = order.getStatus();
+            String newStatus = orderDTO.getStatus();
+
+            if (newStatus == null || newStatus.isBlank()) {
 
                 throw new RuntimeException(
                         "Order status cannot be empty."
                 );
             }
 
-            order.setStatus(orderDTO.getStatus());
+            order.setStatus(newStatus);
 
             orderRepository.save(order);
+
+            // Check old and new order status
+            log.info(
+                    "STATUS UPDATE -> Order ID: {}, Old Status: {}, New Status: {}",
+                    order.getOrderId(),
+                    oldStatus,
+                    newStatus
+            );
+
+            // Check whether email condition is reached
+            log.info(
+                    "EMAIL CHECK -> oldStatus={}, newStatus={}",
+                    oldStatus,
+                    newStatus
+            );
+
+            /*
+             * Send email only when order changes to CONFIRMED.
+             */
+            if (!"CONFIRMED".equalsIgnoreCase(oldStatus)
+                    && "CONFIRMED".equalsIgnoreCase(newStatus)) {
+
+                log.info(
+                        "Order {} changed to CONFIRMED. Sending email...",
+                        order.getOrderId()
+                );
+
+                try {
+
+                    emailService.sendOrderConfirmationEmail(order);
+
+                } catch (Exception emailException) {
+
+                    /*
+                     * Order is already confirmed.
+                     * Email failure should not undo the confirmation.
+                     */
+                    log.error(
+                            "Order {} was confirmed, but confirmation email could not be sent: {}",
+                            order.getOrderId(),
+                            emailException.getMessage()
+                    );
+                }
+            }
 
         } catch (Exception e) {
 
@@ -393,7 +447,8 @@ public class OrderServiceImpl implements OrderService {
                     order.getDiningTable().getTableId();
 
             tableNumber =
-                    order.getDiningTable().getTableNumber();
+                    order.getDiningTable()
+                            .getTableNumber();
         }
 
         if (order.getDiscountCoupon() != null) {

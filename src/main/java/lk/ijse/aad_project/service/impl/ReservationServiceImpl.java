@@ -8,6 +8,7 @@ import lk.ijse.aad_project.repository.DiningTableRepository;
 import lk.ijse.aad_project.repository.ReservationRepository;
 import lk.ijse.aad_project.repository.UserRepository;
 import lk.ijse.aad_project.service.ReservationService;
+import lk.ijse.aad_project.service.SmsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,26 +22,30 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final DiningTableRepository diningTableRepository;
+    private final SmsService smsService;
 
 
     public ReservationServiceImpl(
             ReservationRepository reservationRepository,
             UserRepository userRepository,
-            DiningTableRepository diningTableRepository
+            DiningTableRepository diningTableRepository,
+            SmsService smsService
     ) {
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
         this.diningTableRepository = diningTableRepository;
+        this.smsService = smsService;
     }
 
 
     // ============================================================
     // SAVE RESERVATION
-    // Only CUSTOMER users can create reservations
     // ============================================================
 
     @Override
-    public void saveReservation(ReservationDTO reservationDTO) {
+    public void saveReservation(
+            ReservationDTO reservationDTO
+    ) {
 
         log.info("Execute method saveReservation");
 
@@ -66,7 +71,7 @@ public class ReservationServiceImpl implements ReservationService {
 
 
             // ----------------------------------------------------
-            // Check whether user is CUSTOMER
+            // Check CUSTOMER role
             // ----------------------------------------------------
 
             boolean isCustomer =
@@ -76,7 +81,9 @@ public class ReservationServiceImpl implements ReservationService {
                             .anyMatch(userRole ->
                                     userRole.getRole() != null
                                             && "CUSTOMER".equalsIgnoreCase(
-                                            userRole.getRole().getRoleName()
+                                            userRole
+                                                    .getRole()
+                                                    .getRoleName()
                                     )
                             );
 
@@ -105,7 +112,6 @@ public class ReservationServiceImpl implements ReservationService {
                 );
             }
 
-
             DiningTable diningTable =
                     optionalTable.get();
 
@@ -133,7 +139,7 @@ public class ReservationServiceImpl implements ReservationService {
 
 
             // ----------------------------------------------------
-            // Save
+            // Save Reservation
             // ----------------------------------------------------
 
             reservationRepository.save(
@@ -187,7 +193,6 @@ public class ReservationServiceImpl implements ReservationService {
                 );
             }
 
-
             Reservation reservation =
                     optionalReservation.get();
 
@@ -226,7 +231,6 @@ public class ReservationServiceImpl implements ReservationService {
                 );
             }
 
-
             User user =
                     optionalUser.get();
 
@@ -254,7 +258,6 @@ public class ReservationServiceImpl implements ReservationService {
                 );
             }
 
-
             DiningTable diningTable =
                     optionalTable.get();
 
@@ -281,6 +284,64 @@ public class ReservationServiceImpl implements ReservationService {
                     "Reservation updated successfully. ID: {}",
                     reservation.getReservationId()
             );
+
+
+            // ====================================================
+            // SEND SMS ONLY WHEN RESERVATION IS CONFIRMED
+            // ====================================================
+
+            if (
+                    "CONFIRMED".equalsIgnoreCase(
+                            reservationDTO.getStatus()
+                    )
+            ) {
+
+                String phoneNumber =
+                        user.getPhoneNumber();
+
+
+                // ------------------------------------------------
+                // Check phone number
+                // ------------------------------------------------
+
+                if (
+                        phoneNumber != null
+                                && !phoneNumber.isBlank()
+                ) {
+
+                    String message =
+                            "Hello "
+                                    + user.getUsername()
+                                    + ", your restaurant reservation has been confirmed."
+                                    + " Reservation ID: "
+                                    + reservation.getReservationId()
+                                    + ". Thank you.";
+
+
+                    // ------------------------------------------------
+                    // Send SMS
+                    // ------------------------------------------------
+
+                    smsService.sendSms(
+                            phoneNumber,
+                            message
+                    );
+
+
+                    log.info(
+                            "Confirmation SMS sent to customer. User ID: {}",
+                            user.getUserId()
+                    );
+
+                } else {
+
+                    log.warn(
+                            "Customer phone number is empty. SMS not sent. User ID: {}",
+                            user.getUserId()
+                    );
+                }
+            }
+
 
         } catch (Exception e) {
 
@@ -439,7 +500,10 @@ public class ReservationServiceImpl implements ReservationService {
                         // Get Table Number
                         // ------------------------------------------------
 
-                        if (reservation.getDiningTable() != null) {
+                        if (
+                                reservation.getDiningTable()
+                                        != null
+                        ) {
 
                             tableNumber =
                                     reservation
@@ -461,11 +525,15 @@ public class ReservationServiceImpl implements ReservationService {
                                 reservation.getStatus(),
 
                                 reservation.getUser() != null
-                                        ? reservation.getUser().getUserId()
+                                        ? reservation
+                                          .getUser()
+                                          .getUserId()
                                         : 0,
 
                                 reservation.getDiningTable() != null
-                                        ? reservation.getDiningTable().getTableId()
+                                        ? reservation
+                                          .getDiningTable()
+                                          .getTableId()
                                         : 0,
 
                                 username,

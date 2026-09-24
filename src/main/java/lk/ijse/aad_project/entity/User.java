@@ -24,12 +24,21 @@ public class User {
 
     private String email;
 
+    // ==========================================
+    // PHONE NUMBER
+    // ==========================================
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
             fetch = FetchType.EAGER
     )
     private List<UserRole> userRoleList;
+
 
     @OneToMany(
             mappedBy = "user",
@@ -38,12 +47,14 @@ public class User {
     )
     private List<Order> orderList;
 
+
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
     private List<Reservation> reservationList;
+
 
     @OneToMany(
             mappedBy = "user",
@@ -53,12 +64,6 @@ public class User {
     private List<StaffAssignment> staffAssignmentList;
 
 
-    /**
-     * Get user's role.
-     *
-     * This method adds a direct "role" property
-     * to the JSON response.
-     */
     @JsonProperty("role")
     public String getRole() {
 
@@ -66,17 +71,20 @@ public class User {
 
             UserRole userRole = userRoleList.get(0);
 
-            if (userRole != null && userRole.getRole() != null) {
+            if (userRole != null &&
+                    userRole.getRole() != null) {
 
-                String roleName = userRole.getRole().getRoleName();
+                String roleName =
+                        userRole.getRole().getRoleName();
 
-                if (roleName != null && !roleName.isBlank()) {
+                if (roleName != null &&
+                        !roleName.isBlank()) {
+
                     return roleName;
                 }
             }
         }
 
-        // Default role
         return "CUSTOMER";
     }
 }

@@ -29,56 +29,188 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        /*
+         * ---------------------------------------------------------
+         * CORS PRE-FLIGHT REQUEST
+         * ---------------------------------------------------------
+         *
+         * Browser sends an OPTIONS request before PUT/POST/DELETE
+         * requests when CORS preflight is required.
+         *
+         * We don't need JWT authentication for OPTIONS requests.
+         */
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        /*
+         * ---------------------------------------------------------
+         * GET AUTHORIZATION HEADER
+         * ---------------------------------------------------------
+         */
 
         String authHeader = request.getHeader("Authorization");
 
+        /*
+         * If there is no Authorization header,
+         * simply continue the filter chain.
+         */
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
+
+            /*
+             * -----------------------------------------------------
+             * EXTRACT JWT TOKEN
+             * -----------------------------------------------------
+             */
+
             String token = authHeader.substring(7);
+
+            /*
+             * -----------------------------------------------------
+             * EXTRACT USERNAME FROM TOKEN
+             * -----------------------------------------------------
+             */
+
             String username = jwtUtil.extractUsername(token);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            /*
+             * -----------------------------------------------------
+             * CHECK USERNAME AND SECURITY CONTEXT
+             * -----------------------------------------------------
+             */
+
+            if (username != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                /*
+                 * Load user details from database
+                 */
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(username);
+
+                /*
+                 * -------------------------------------------------
+                 * VALIDATE TOKEN
+                 * -------------------------------------------------
+                 */
 
                 if (jwtUtil.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    /*
+                     * Create authenticated user
+                     */
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
+                    /*
+                     * Add request details
+                     */
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
+
+                    /*
+                     * Set authentication in Security Context
+                     */
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authToken);
                 }
             }
 
+            /*
+             * Continue request
+             */
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException ex) {
-            handleJwtException(response, 401, "Token has expired");
+
+            handleJwtException(
+                    response,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    "Token has expired"
+            );
+
         } catch (SignatureException ex) {
-            handleJwtException(response, 401, "Invalid token signature");
+
+            handleJwtException(
+                    response,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    "Invalid token signature"
+            );
+
         } catch (MalformedJwtException ex) {
-            handleJwtException(response, 401, "Invalid token format");
+
+            handleJwtException(
+                    response,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    "Invalid token format"
+            );
+
         } catch (Exception ex) {
-            handleJwtException(response, 500, "Authentication error: " + ex.getMessage());
+
+            handleJwtException(
+                    response,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Authentication error: " + ex.getMessage()
+            );
         }
     }
 
-    private void handleJwtException(HttpServletResponse response, int code, String message) throws IOException {
-        response.setStatus(HttpStatus.OK.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    /*
+     * -------------------------------------------------------------
+     * JWT ERROR RESPONSE
+     * -------------------------------------------------------------
+     */
+
+    private void handleJwtException(
+            HttpServletResponse response,
+            int code,
+            String message
+    ) throws IOException {
+
+        /*
+         * Return the actual HTTP status.
+         *
+         * Previously this was always 200 OK.
+         */
+        response.setStatus(code);
+
+        response.setContentType(
+                MediaType.APPLICATION_JSON_VALUE
+        );
 
         Map<String, Object> errorResponse = new HashMap<>();
+
         errorResponse.put("code", code);
         errorResponse.put("message", message);
         errorResponse.put("data", null);
 
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        response.getWriter().write(
+                objectMapper.writeValueAsString(errorResponse)
+        );
     }
 }

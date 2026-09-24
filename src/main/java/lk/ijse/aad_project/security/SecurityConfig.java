@@ -3,6 +3,7 @@ package lk.ijse.aad_project.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -31,33 +32,112 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // ==============================
+                // CORS
+                // ==============================
+
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
+
+                // ==============================
+                // CSRF
+                // ==============================
 
                 .csrf(AbstractHttpConfigurer::disable)
 
+                // ==============================
+                // AUTHORIZATION
+                // ==============================
+
                 .authorizeHttpRequests(auth -> auth
 
-                        // Login / User APIs
-                        .requestMatchers("/v1/users/**").permitAll()
-
-                        // Other APIs
+                        // CORS preflight
                         .requestMatchers(
-                                "/v1/orders/**",
-                                "/v1/dining-tables/**",
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
+                        .requestMatchers("/v1/order-details/**").permitAll()
+
+                        .requestMatchers("/v1/payments/**").permitAll()
+
+                        // ==========================
+                        // USERS / LOGIN / SIGNUP
+                        // ==========================
+
+                        .requestMatchers(
+                                "/v1/users/**"
+                        ).permitAll()
+
+                        // ==========================
+                        // MENU ITEMS
+                        // ==========================
+
+                        .requestMatchers(
+                                "/v1/menu-item/**"
+                        ).permitAll()
+
+                        // ==========================
+                        // ORDERS
+                        // ==========================
+
+                        .requestMatchers(
+                                "/v1/orders/**"
+                        ).permitAll()
+
+                        // ==========================
+                        // DINING TABLES
+                        // ==========================
+
+                        .requestMatchers(
+                                "/v1/dining-tables/**"
+                        ).permitAll()
+
+                        // ==========================
+                        // RESERVATIONS
+                        // ==========================
+
+                        .requestMatchers(
                                 "/v1/reservations/**"
                         ).permitAll()
+
+                        // ==========================
+                        // OTHER APIs
+                        // ==========================
 
                         .anyRequest().authenticated()
                 )
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                // ==============================
+                // SESSION
+                // ==============================
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
-                .authenticationProvider(authenticationProvider())
+                // ==============================
+                // AUTHENTICATION PROVIDER
+                // ==============================
+
+                .authenticationProvider(
+                        authenticationProvider()
+                )
+
+                // ==============================
+                // JWT FILTER
+                // ==============================
 
                 .addFilterBefore(
                         jwtAuthFilter,
@@ -67,59 +147,102 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // =========================================================
+    // AUTHENTICATION PROVIDER
+    // =========================================================
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
 
         DaoAuthenticationProvider authProvider =
-                new DaoAuthenticationProvider(userDetailsService);
+                new DaoAuthenticationProvider(
+                        userDetailsService
+                );
 
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(
+                passwordEncoder()
+        );
 
         return authProvider;
     }
 
+    // =========================================================
+    // AUTHENTICATION MANAGER
+    // =========================================================
+
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+            AuthenticationConfiguration config
+    ) throws Exception {
 
         return config.getAuthenticationManager();
     }
 
+    // =========================================================
+    // PASSWORD ENCODER
+    // =========================================================
+
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder(12);
     }
+
+    // =========================================================
+    // CORS CONFIGURATION
+    // =========================================================
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration =
+                new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                "http://127.0.0.1:5501",
-                "http://localhost:5501"
-        ));
+        configuration.setAllowedOrigins(
+                List.of(
+                        "http://127.0.0.1:5501",
+                        "http://localhost:5501"
+                )
+        );
 
-        configuration.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS",
-                "HEAD"
-        ));
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS",
+                        "HEAD"
+                )
+        );
 
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Origin",
+                        "X-Requested-With"
+                )
+        );
 
-        configuration.setExposedHeaders(List.of(
-                "Authorization",
-                "Content-Type"
-        ));
+        configuration.setExposedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Type"
+                )
+        );
+
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
 
         return source;
     }
