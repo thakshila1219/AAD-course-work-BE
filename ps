@@ -1,0 +1,27 @@
+[1mdiff --git a/src/main/resources/application.properties b/src/main/resources/application.properties[m
+[1mindex eaac3e2..7fe66a2 100644[m
+[1m--- a/src/main/resources/application.properties[m
+[1m+++ b/src/main/resources/application.properties[m
+[36m@@ -7,4 +7,20 @@[m [mspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver[m
+ [m
+ spring.jpa.hibernate.ddl-auto=update[m
+ spring.jpa.show-sql=true[m
+[31m-spring.jpa.properties.hibernate.format_sql=true[m
+\ No newline at end of file[m
+[32m+[m[32mspring.jpa.properties.hibernate.format_sql=true[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# ==============================[m
+[32m+[m[32m# Email Configuration[m
+[32m+[m[32m# ==============================[m
+[32m+[m
+[32m+[m[32mspring.mail.host=smtp.gmail.com[m
+[32m+[m[32mspring.mail.port=587[m
+[32m+[m[32mspring.mail.username=${MAIL_USERNAME}[m
+[32m+[m[32mspring.mail.password=${MAIL_PASSWORD}[m
+[32m+[m
+[32m+[m[32mspring.mail.properties.mail.smtp.auth=true[m
+[32m+[m[32mspring.mail.properties.mail.smtp.starttls.enable=true[m
+[32m+[m[32mspring.mail.properties.mail.smtp.starttls.required=true[m
+[41m+[m
+[41m+[m

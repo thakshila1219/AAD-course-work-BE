@@ -8,7 +8,6 @@ import lk.ijse.aad_project.repository.DiningTableRepository;
 import lk.ijse.aad_project.repository.ReservationRepository;
 import lk.ijse.aad_project.repository.UserRepository;
 import lk.ijse.aad_project.service.ReservationService;
-import lk.ijse.aad_project.service.SmsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,19 +21,16 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final DiningTableRepository diningTableRepository;
-    private final SmsService smsService;
 
 
     public ReservationServiceImpl(
             ReservationRepository reservationRepository,
             UserRepository userRepository,
-            DiningTableRepository diningTableRepository,
-            SmsService smsService
+            DiningTableRepository diningTableRepository
     ) {
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
         this.diningTableRepository = diningTableRepository;
-        this.smsService = smsService;
     }
 
 
@@ -286,63 +282,6 @@ public class ReservationServiceImpl implements ReservationService {
             );
 
 
-            // ====================================================
-            // SEND SMS ONLY WHEN RESERVATION IS CONFIRMED
-            // ====================================================
-
-            if (
-                    "CONFIRMED".equalsIgnoreCase(
-                            reservationDTO.getStatus()
-                    )
-            ) {
-
-                String phoneNumber =
-                        user.getPhoneNumber();
-
-
-                // ------------------------------------------------
-                // Check phone number
-                // ------------------------------------------------
-
-                if (
-                        phoneNumber != null
-                                && !phoneNumber.isBlank()
-                ) {
-
-                    String message =
-                            "Hello "
-                                    + user.getUsername()
-                                    + ", your restaurant reservation has been confirmed."
-                                    + " Reservation ID: "
-                                    + reservation.getReservationId()
-                                    + ". Thank you.";
-
-
-                    // ------------------------------------------------
-                    // Send SMS
-                    // ------------------------------------------------
-
-                    smsService.sendSms(
-                            phoneNumber,
-                            message
-                    );
-
-
-                    log.info(
-                            "Confirmation SMS sent to customer. User ID: {}",
-                            user.getUserId()
-                    );
-
-                } else {
-
-                    log.warn(
-                            "Customer phone number is empty. SMS not sent. User ID: {}",
-                            user.getUserId()
-                    );
-                }
-            }
-
-
         } catch (Exception e) {
 
             log.error(
@@ -555,3 +494,4 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 }
+

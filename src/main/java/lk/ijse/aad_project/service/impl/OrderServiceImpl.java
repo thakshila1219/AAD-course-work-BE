@@ -3,12 +3,12 @@ package lk.ijse.aad_project.service.impl;
 import lk.ijse.aad_project.dto.OrderDTO;
 import lk.ijse.aad_project.entity.DiscountCoupon;
 import lk.ijse.aad_project.entity.DiningTable;
+import lk.ijse.aad_project.entity.Ingredient;
 import lk.ijse.aad_project.entity.Order;
+import lk.ijse.aad_project.entity.OrderDetail;
+import lk.ijse.aad_project.entity.RecipeItem;
 import lk.ijse.aad_project.entity.User;
-import lk.ijse.aad_project.repository.DiscountCouponRepository;
-import lk.ijse.aad_project.repository.DiningTableRepository;
-import lk.ijse.aad_project.repository.OrderRepository;
-import lk.ijse.aad_project.repository.UserRepository;
+import lk.ijse.aad_project.repository.*;
 import lk.ijse.aad_project.service.EmailService;
 import lk.ijse.aad_project.service.OrderService;
 
@@ -30,18 +30,28 @@ public class OrderServiceImpl implements OrderService {
     private final DiscountCouponRepository discountCouponRepository;
     private final EmailService emailService;
 
+    private final OrderDetailRepository orderDetailRepository;
+    private final RecipeItemRepository recipeItemRepository;
+    private final IngredientRepository ingredientRepository;
+
     public OrderServiceImpl(
             OrderRepository orderRepository,
             UserRepository userRepository,
             DiningTableRepository diningTableRepository,
             DiscountCouponRepository discountCouponRepository,
-            EmailService emailService
+            EmailService emailService,
+            OrderDetailRepository orderDetailRepository,
+            RecipeItemRepository recipeItemRepository,
+            IngredientRepository ingredientRepository
     ) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.diningTableRepository = diningTableRepository;
         this.discountCouponRepository = discountCouponRepository;
         this.emailService = emailService;
+        this.orderDetailRepository = orderDetailRepository;
+        this.recipeItemRepository = recipeItemRepository;
+        this.ingredientRepository = ingredientRepository;
     }
 
     @Override
@@ -255,9 +265,28 @@ public class OrderServiceImpl implements OrderService {
             String newStatus = orderDTO.getStatus();
 
             if (newStatus == null || newStatus.isBlank()) {
-
                 throw new RuntimeException(
                         "Order status cannot be empty."
+                );
+            }
+
+            /*
+             * Stock is deducted only when the order
+             * changes to CONFIRMED for the first time.
+             */
+            if (!"CONFIRMED".equalsIgnoreCase(oldStatus)
+                    && "CONFIRMED".equalsIgnoreCase(newStatus)) {
+
+                log.info(
+                        "Order {} is being confirmed. Checking ingredient stock...",
+                        order.getOrderId()
+                );
+
+                deductIngredientStock(order);
+
+                log.info(
+                        "Ingredient stock successfully deducted for Order {}",
+                        order.getOrderId()
                 );
             }
 
@@ -265,7 +294,6 @@ public class OrderServiceImpl implements OrderService {
 
             orderRepository.save(order);
 
-            // Check old and new order status
             log.info(
                     "STATUS UPDATE -> Order ID: {}, Old Status: {}, New Status: {}",
                     order.getOrderId(),
@@ -273,15 +301,8 @@ public class OrderServiceImpl implements OrderService {
                     newStatus
             );
 
-            // Check whether email condition is reached
-            log.info(
-                    "EMAIL CHECK -> oldStatus={}, newStatus={}",
-                    oldStatus,
-                    newStatus
-            );
-
             /*
-             * Send email only when order changes to CONFIRMED.
+             * Send confirmation email.
              */
             if (!"CONFIRMED".equalsIgnoreCase(oldStatus)
                     && "CONFIRMED".equalsIgnoreCase(newStatus)) {
@@ -318,6 +339,172 @@ public class OrderServiceImpl implements OrderService {
 
             throw e;
         }
+    }
+
+    /**
+     * Deduct ingredients according to the recipes
+     * of all menu items in the order.
+     */
+    private void deductIngredientStock(Order order) {
+
+        log.info(
+                "Starting stock deduction for Order ID: {}",
+                order.getOrderId()
+        );
+
+        List<OrderDetail> orderDetails =
+                orderDetailRepository.findByOrderOrderId(
+                        order.getOrderId()
+                );
+
+        if (orderDetails == null || orderDetails.isEmpty()) {
+
+            log.info(
+                    "No order details found for Order ID: {}",
+                    order.getOrderId()
+            );
+
+            return;
+        }
+
+        /*
+         * First check whether enough stock exists
+         * for every ingredient.
+         *
+         * We do this BEFORE changing any stock.
+         */
+        for (OrderDetail orderDetail : orderDetails) {
+
+            if (orderDetail.getMenuItem() == null) {
+                throw new RuntimeException(
+                        "Menu item is missing for Order Detail ID: "
+                                + orderDetail.getOrderDetailId()
+                );
+            }
+
+            long menuItemId =
+                    orderDetail.getMenuItem().getItemId();
+
+            int orderedQuantity =
+                    orderDetail.getQuantity();
+
+            if (orderedQuantity <= 0) {
+                throw new RuntimeException(
+                        "Invalid order quantity for Menu Item ID: "
+                                + menuItemId
+                );
+            }
+
+            List<RecipeItem> recipeItems =
+                    recipeItemRepository.findAll()
+                            .stream()
+                            .filter(recipeItem ->
+                                    recipeItem.getMenuItem() != null
+                                            && recipeItem.getMenuItem()
+                                            .getItemId() == menuItemId
+                            )
+                            .toList();
+
+            if (recipeItems.isEmpty()) {
+
+                log.warn(
+                        "No recipe found for Menu Item ID: {}",
+                        menuItemId
+                );
+
+                continue;
+            }
+
+            for (RecipeItem recipeItem : recipeItems) {
+
+                Ingredient ingredient =
+                        recipeItem.getIngredient();
+
+                if (ingredient == null) {
+                    throw new RuntimeException(
+                            "Ingredient is missing for Recipe Item ID: "
+                                    + recipeItem.getRecipeItemId()
+                    );
+                }
+
+                double requiredQuantity =
+                        recipeItem.getRequiredQuantity()
+                                * orderedQuantity;
+
+                if (ingredient.getQuantityOnHand()
+                        < requiredQuantity) {
+
+                    throw new RuntimeException(
+                            "Insufficient stock for ingredient: "
+                                    + ingredient.getName()
+                                    + ". Required: "
+                                    + requiredQuantity
+                                    + " "
+                                    + ingredient.getUnit()
+                                    + ", Available: "
+                                    + ingredient.getQuantityOnHand()
+                                    + " "
+                                    + ingredient.getUnit()
+                    );
+                }
+            }
+        }
+
+        /*
+         * Stock is sufficient for every ingredient.
+         * Now deduct the quantities.
+         */
+        for (OrderDetail orderDetail : orderDetails) {
+
+            long menuItemId =
+                    orderDetail.getMenuItem().getItemId();
+
+            int orderedQuantity =
+                    orderDetail.getQuantity();
+
+            List<RecipeItem> recipeItems =
+                    recipeItemRepository.findAll()
+                            .stream()
+                            .filter(recipeItem ->
+                                    recipeItem.getMenuItem() != null
+                                            && recipeItem.getMenuItem()
+                                            .getItemId() == menuItemId
+                            )
+                            .toList();
+
+            for (RecipeItem recipeItem : recipeItems) {
+
+                Ingredient ingredient =
+                        recipeItem.getIngredient();
+
+                double requiredQuantity =
+                        recipeItem.getRequiredQuantity()
+                                * orderedQuantity;
+
+                double oldStock =
+                        ingredient.getQuantityOnHand();
+
+                double newStock =
+                        oldStock - requiredQuantity;
+
+                ingredient.setQuantityOnHand(newStock);
+
+                ingredientRepository.save(ingredient);
+
+                log.info(
+                        "STOCK UPDATE -> Ingredient: {}, Old: {}, Used: {}, New: {}",
+                        ingredient.getName(),
+                        oldStock,
+                        requiredQuantity,
+                        newStock
+                );
+            }
+        }
+
+        log.info(
+                "Stock deduction completed for Order ID: {}",
+                order.getOrderId()
+        );
     }
 
     @Override
